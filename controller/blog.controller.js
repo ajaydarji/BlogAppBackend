@@ -4,22 +4,25 @@ import { v2 as cloudinary } from "cloudinary";
 console.log(Blog);
 export const createBlog = async (req, res) => {
   try {
-    if (!req.files || Object.keys(req.files).length === 0) {
+    if (!req.files || !req.files.blogImage) {
       return res.status(400).json({ message: "Blog Image is required" });
     }
+
     const { blogImage } = req.files;
     const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedFormats.includes(blogImage.mimetype)) {
       return res.status(400).json({
-        message: "Invalid photo format. Only jpg and png are allowed",
+        message: "Invalid photo format. Only jpg, png, and webp are allowed",
       });
     }
+
     const { title, category, about } = req.body;
     if (!title || !category || !about) {
       return res
         .status(400)
-        .json({ message: "title, category & about are required fields" });
+        .json({ message: "title, category, and about are required fields" });
     }
+
     const adminName = req?.user?.name;
     const adminPhoto = req?.user?.photo?.url;
     const createdBy = req?.user?._id;
@@ -27,9 +30,14 @@ export const createBlog = async (req, res) => {
     const cloudinaryResponse = await cloudinary.uploader.upload(
       blogImage.tempFilePath
     );
+
     if (!cloudinaryResponse || cloudinaryResponse.error) {
-      console.log(cloudinaryResponse.error);
+      console.error(cloudinaryResponse.error);
+      return res
+        .status(500)
+        .json({ error: "Error uploading image to Cloudinary" });
     }
+
     const blogData = {
       title,
       about,
@@ -42,6 +50,7 @@ export const createBlog = async (req, res) => {
         url: cloudinaryResponse.url,
       },
     };
+
     const blog = await Blog.create(blogData);
 
     res.status(201).json({
@@ -49,7 +58,7 @@ export const createBlog = async (req, res) => {
       blog,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({ error: "Internal Server error" });
   }
 };
