@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: '*',
+    origin: 'https://blog-app-mern-proj.netlify.app',
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
